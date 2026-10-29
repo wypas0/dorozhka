@@ -1,0 +1,22 @@
+// «Дорожка 2.0»: один Worker отдаёт и API, и сайт /beta.
+// Ничего не выкладывать в прод отсюда: деплой делает владелец или CTO руками (см. README).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dorozhka-v2",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-08-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist",
+    "binding": "ASSETS",
+    "not_found_handling": "none",
+    "run_worker_first": ["/", "/api/*", "/auth/*"]
+  },
+  "d1_databases": [
+    // database_id заменить на настоящий после `wrangler d1 create dorozhka-v2`.
+    { "binding": "DB", "database_name": "dorozhka-v2", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [{ "binding": "RECEIPTS", "bucket_name": "dorozhka-receipts" }],
+  "vars": { "GOOGLE_CLIENT_ID": "" }
+  // Секреты (не в этом файле): GOOGLE_CLIENT_SECRET — `wrangler secret put`, локально — в .dev.vars.
+}
