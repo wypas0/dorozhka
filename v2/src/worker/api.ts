@@ -4,6 +4,10 @@ import { Hono, type Context } from 'hono';
 import { deleteCookie } from 'hono/cookie';
 import type { AppEnv } from './env';
 import { requireCoach, sameOrigin, SESSION_COOKIE } from './auth';
+import { body, onApiError } from './errors';
+import { loadJournal } from './journal';
+import { schedule } from './schedule';
+import { summary } from '../shared/rules';
 import {
   CLIENT_CONSENT_VERSION, COACH_CONSENT_VERSION, FREE_LIMIT, Invalid, mergeSettings, parseClient, parseConsent,
   parseProgram, parseSettings, type Client, type ClientConsent, type Coach, type Program,
@@ -15,17 +19,7 @@ const now = () => new Date().toISOString();
 export const api = new Hono<AppEnv>();
 api.use('*', sameOrigin, requireCoach);
 
-api.onError((err, c) => {
-  if (err instanceof Invalid) return c.json({ error: 'invalid', message: err.message }, 400);
-  const m = String(err?.message || '');
-  if (m.includes('free_limit')) return c.json({ error: 'free_limit', message: `На бесплатном тарифе до ${FREE_LIMIT} клиентов` }, 409);
-  const consent = m.match(/consent_[a-z_]+/)?.[0];
-  if (consent) return c.json({ error: consent }, 400);
-  console.error('api', err);
-  return c.json({ error: 'server' }, 500);
-});
-
-const body = async (c: C) => c.req.json().catch(() => { throw new Invalid('Тело запроса — не JSON'); });
+api.onError(onApiError);
 
 /* ---------- тренер ---------- */
 
@@ -145,9 +139,11 @@ async function loadClients(c: C, only?: string): Promise<Client[]> {
   ]);
   const byClient = new Map<string, ClientConsent[]>();
   for (const r of cs.results as any[]) byClient.set(r.client_id, [...(byClient.get(r.client_id) || []), consentOf(r)]);
+  const { J, now } = await loadJournal(db, id);
   return (cl.results as any[]).map((r) => ({
     id: r.id, name: r.name, phone: r.phone, isChild: !!r.is_child, parentName: r.parent_name, note: r.note,
     createdAt: r.created_at, archivedAt: r.archived_at, consents: byClient.get(r.id) || [],
+    pauses: J.clients.find((x) => x.id === r.id)?.pauses ?? [], summary: summary(J, r.id, now),
   }));
 }
 const oneClient = async (c: C, id: string) => (await loadClients(c, id))[0];
@@ -228,3 +224,6 @@ api.post('/clients/:id/consents/:cid/revoke', async (c) => {
   if (!r.meta.changes) return c.json({ error: 'not_found' }, 404);
   return c.json(await oneClient(c, c.req.param('id')));
 });
+
+// Этап 1: расписание, отметки, абонементы, паузы, отпуск, группы (после проверки согласия).
+api.route('/', schedule);

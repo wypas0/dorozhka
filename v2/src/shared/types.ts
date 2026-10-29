@@ -1,4 +1,5 @@
 // Общие типы и проверки для Worker'а и приложения: одна копия правил формы данных.
+import type { ClientSummary, Pause } from './rules';
 
 export type LessonType = 'individual' | 'baby' | 'split' | 'minigroup' | 'group';
 export const LESSON_TYPES: LessonType[] = ['individual', 'baby', 'split', 'minigroup', 'group'];
@@ -84,6 +85,8 @@ export interface Client {
   createdAt: string;
   archivedAt: string | null;
   consents: ClientConsent[];
+  pauses: Pause[];
+  summary: ClientSummary;
 }
 
 export interface NewConsent {

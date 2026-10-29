@@ -131,7 +131,7 @@ CREATE TABLE client_plans (
   total       INTEGER NOT NULL CHECK (total BETWEEN 1 AND 100),
   slots       TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(slots)), -- {"0": "18:00", "3": "18:00"}, 0 = понедельник
   place       TEXT NOT NULL DEFAULT '',
-  created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+  created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now')),
   UNIQUE (id, coach_id),
   FOREIGN KEY (client_id, coach_id) REFERENCES clients(id, coach_id) ON DELETE CASCADE,
   FOREIGN KEY (program_id, coach_id) REFERENCES programs(id, coach_id)
@@ -188,9 +188,9 @@ CREATE TABLE lessons (
   next_note   TEXT NOT NULL DEFAULT '',
   cancelled   INTEGER NOT NULL DEFAULT 0 CHECK (cancelled IN (0, 1)),
   UNIQUE (id, coach_id),
-  FOREIGN KEY (group_id, coach_id) REFERENCES client_groups(id, coach_id) ON DELETE SET NULL,
-  FOREIGN KEY (plan_id, coach_id) REFERENCES client_plans(id, coach_id) ON DELETE SET NULL,
-  FOREIGN KEY (ext_of, coach_id) REFERENCES lessons(id, coach_id) ON DELETE CASCADE
+  FOREIGN KEY (group_id, coach_id) REFERENCES client_groups(id, coach_id),
+  FOREIGN KEY (plan_id, coach_id) REFERENCES client_plans(id, coach_id),
+  FOREIGN KEY (ext_of, coach_id) REFERENCES lessons(id, coach_id)
 );
 CREATE INDEX lessons_coach_date ON lessons(coach_id, date);
 
@@ -225,7 +225,7 @@ CREATE TABLE payments (
   note             TEXT NOT NULL DEFAULT '',
   created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
   FOREIGN KEY (client_id, coach_id) REFERENCES clients(id, coach_id) ON DELETE CASCADE,
-  FOREIGN KEY (with_client_id, coach_id) REFERENCES clients(id, coach_id) ON DELETE SET NULL,
+  FOREIGN KEY (with_client_id, coach_id) REFERENCES clients(id, coach_id),
   FOREIGN KEY (program_id, coach_id) REFERENCES programs(id, coach_id)
 );
 CREATE INDEX payments_client ON payments(coach_id, client_id);
@@ -255,7 +255,7 @@ CREATE TABLE measurements (
   rpe         INTEGER CHECK (rpe IS NULL OR rpe BETWEEN 1 AND 10),
   note        TEXT NOT NULL DEFAULT '',
   FOREIGN KEY (client_id, coach_id) REFERENCES clients(id, coach_id) ON DELETE CASCADE,
-  FOREIGN KEY (lesson_id, coach_id) REFERENCES lessons(id, coach_id) ON DELETE SET NULL
+  FOREIGN KEY (lesson_id, coach_id) REFERENCES lessons(id, coach_id)
 );
 CREATE INDEX measurements_client ON measurements(coach_id, client_id);
 
@@ -327,3 +327,20 @@ CREATE TABLE client_invites (
   used_at     TEXT,
   FOREIGN KEY (client_id, coach_id) REFERENCES clients(id, coach_id) ON DELETE CASCADE
 );
+
+-- Ссылки «занятие → группа / план / отработка», «оплата → второй клиент», «замер → занятие» необязательные.
+-- ON DELETE SET NULL на составном ключе (id, coach_id) обнулил бы и coach_id, поэтому при удалении
+-- родителя обнуляем только саму ссылку триггером.
+CREATE TRIGGER lessons_unlink BEFORE DELETE ON lessons BEGIN
+  UPDATE lessons SET ext_of = NULL WHERE ext_of = OLD.id;
+  UPDATE measurements SET lesson_id = NULL WHERE lesson_id = OLD.id;
+END;
+CREATE TRIGGER client_groups_unlink BEFORE DELETE ON client_groups BEGIN
+  UPDATE lessons SET group_id = NULL WHERE group_id = OLD.id;
+END;
+CREATE TRIGGER client_plans_unlink BEFORE DELETE ON client_plans BEGIN
+  UPDATE lessons SET plan_id = NULL WHERE plan_id = OLD.id;
+END;
+CREATE TRIGGER clients_unlink BEFORE DELETE ON clients BEGIN
+  UPDATE payments SET with_client_id = NULL WHERE with_client_id = OLD.id;
+END;

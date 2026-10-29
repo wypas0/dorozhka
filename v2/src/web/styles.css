@@ -212,3 +212,48 @@ textarea.input { height: auto; min-height: 88px; padding: 10px 14px; resize: ver
 }
 .legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 16px; }
 .legend div { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+
+/* ---------- этап 1: отметка, лента дня, неделя ---------- */
+.tag.solid { background: var(--ok); color: #fff; }
+.markpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--fog); border-radius: 16px; padding: 6px; }
+.markpad button { border: 0; border-radius: 12px; background: transparent; min-height: 56px; cursor: pointer; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.markpad button small { font-weight: 400; font-size: 11px; color: var(--muted); }
+.markpad button[aria-pressed='true'] { background: var(--white); box-shadow: var(--shadow); color: var(--prussian); }
+.daystrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 560px; }
+.daystrip button { border: 0; background: var(--white); border-radius: 14px; padding: 8px 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.daystrip button[aria-pressed='true'] { background: var(--prussian); color: #fff; }
+.daystrip i { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.daystrip i.on { background: var(--naples-deep); }
+.feed { display: grid; grid-template-columns: 56px 1fr; gap: 10px 12px; max-width: 640px; }
+.feed .t { text-align: right; padding-top: 14px; border-right: 3px solid var(--line); padding-right: 10px; font-family: var(--font-mono); font-size: 14px; }
+.feed .t small { display: block; color: var(--muted); font-size: 12px; }
+.lcard { background: var(--white); border-radius: 20px; padding: 14px 16px; border: 2px solid transparent; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.lcard.now { border-color: var(--ok); }
+.lcard.cancel { opacity: .55; }
+.lcard .who { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.lcard .who span { display: inline-flex; align-items: center; gap: 6px; }
+.week { position: relative; display: grid; grid-template-columns: 52px repeat(7, minmax(110px, 1fr)); min-width: 820px; }
+.week .col { position: relative; border-left: 1px solid var(--fog); }
+.week .head { padding: 10px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; position: sticky; top: 0; background: var(--white); z-index: 2; }
+.week .head.today { background: var(--prussian-tint); color: var(--prussian); }
+.week .off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--gesso) 0 4px, var(--white) 4px 8px); }
+.week .hour { position: absolute; left: 0; right: 0; border-top: 1px solid var(--fog); }
+.week .nowline { position: absolute; left: 0; right: 0; border-top: 2px solid var(--red); z-index: 3; }
+.wblock { position: absolute; left: 3px; right: 3px; border-radius: 10px; padding: 4px 6px 4px 9px; font-size: 12px; line-height: 15px; overflow: hidden; cursor: pointer; border: 0; text-align: left; background: var(--white); box-shadow: 0 0 0 1px var(--line); z-index: 1; }
+.wblock::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--bar); }
+.wblock b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wblock .ms { display: flex; gap: 2px; margin-top: 2px; }
+.wblock .ms .mark { width: 16px; height: 16px; font-size: 9px; border-radius: 4px; }
+.wblock.cancel { opacity: .5; text-decoration: line-through; }
+.wblock.wait { box-shadow: 0 0 0 1.5px var(--naples-deep); background: var(--naples); }
+.strip { display: flex; gap: 2px; }
+.strip i { width: 10px; height: 8px; border-radius: 2px; background: var(--fog); }
+.strip i.used { background: var(--bar, var(--prussian)); }
+.hist { display: flex; gap: 3px; }
+.hist .mark { width: 20px; height: 20px; font-size: 10px; }
+.slotgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.slotgrid .slot { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.slotgrid .day { border: 1px solid var(--line); border-radius: 10px; padding: 6px 0; text-align: center; cursor: pointer; background: var(--white); font-weight: 600; font-size: 13px; }
+.slotgrid .day.on { background: var(--prussian); border-color: var(--prussian); color: #fff; }
+.slotgrid input[type='time'] { padding: 0 4px; height: 36px; font-size: 13px; text-align: center; }
+@media (max-width: 599px) { .slotgrid { grid-template-columns: repeat(4, 1fr); } }
